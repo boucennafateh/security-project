@@ -7,14 +7,21 @@ import org.fate7.securityproject.model.Role;
 import org.fate7.securityproject.repo.RoleRepo;
 import org.fate7.securityproject.repo.UserRepo;
 import org.fate7.securityproject.service.UserService;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 @Service @RequiredArgsConstructor @Transactional @Slf4j
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepo userRepo;
     private final RoleRepo roleRepo;
@@ -50,5 +57,21 @@ public class UserServiceImpl implements UserService {
         log.info("Getting all users");
         log.info("Getting all users");
         return userRepo.findAll();
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+       AppUser user = userRepo.findByUserName(username);
+       if(user == null){
+           log.error("User {} not found", username);
+           throw new UsernameNotFoundException("User not found");
+       }
+       else
+           log.info("User {} has been found", username);
+
+        Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority(role.getName())));
+        return new User(user.getUserName(), user.getPassword(), authorities);
+
     }
 }
