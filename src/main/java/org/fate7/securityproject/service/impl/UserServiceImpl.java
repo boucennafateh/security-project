@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -25,22 +26,24 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepo userRepo;
     private final RoleRepo roleRepo;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public AppUser saveUser(AppUser user) {
-        log.info("Saving user");
+        log.info("Saving user : {} ", user.getName());
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepo.save(user);
     }
 
     @Override
     public Role saveRole(Role role) {
-        log.info("Saving role");
+        log.info("Saving role {}", role.getName());
         return roleRepo.save(role);
     }
 
     @Override
     public void addRoleToUser(String userName, String roleName) {
-        log.info("adding role to a user");
+        log.info("adding role {} to a user {}", roleName, userName);
         AppUser user = userRepo.findByUserName(userName);
         Role role = roleRepo.findByName(roleName);
         user.getRoles().add(role);
@@ -48,13 +51,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public AppUser getUser(String userName) {
-        log.info("Getting user");
+        log.info("Getting user {}", userName);
         return userRepo.findByUserName(userName);
     }
 
     @Override
     public List<AppUser> getUsers() {
-        log.info("Getting all users");
         log.info("Getting all users");
         return userRepo.findAll();
     }
